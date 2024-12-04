@@ -1,14 +1,20 @@
 import express from 'express'
 import { connectDB } from './utils/features.js'
 import { errorMiddleware } from './middlewares/error.js'
+import {config} from 'dotenv'
 
 //importing routes
 import {userRoutes} from './routes/user.route.js'
 import productRoutes from './routes/product.route.js'
 import NodeCache from 'node-cache'
 
-const PORT = 4000
-connectDB()
+const PORT = process.env.PORT || 4000
+const URI = process.env.MONGO_URI || ""
+config({
+    path:"./.env"
+})
+console.log("port",process.env.PORT)
+connectDB(URI)
 
 const app = express()
 app.use(express.json());

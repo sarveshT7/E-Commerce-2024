@@ -7,7 +7,53 @@ import { rm } from "fs";
 // import { faker } from '@faker-js/faker';
 import NodeCache from "node-cache";
 import { nodeCache } from "../app.js";
+import { invalidateProductCache } from "../utils/features.js";
 
+
+export const latestProducts = TryCatch(async (req, res, next) => {
+    let products;
+    if(nodeCache.has("latest-products")){
+        products = JSON.parse(nodeCache.get("latest-products") as string)
+    } else {
+        products = await Product.find({}).sort({ createdAt: -1 }).limit(5)
+        nodeCache.set("latest-products",JSON.stringify(products))
+    }
+    
+    res.status(201).json({
+        success: true,
+        products
+    })
+    
+})
+export const getAllCategories = TryCatch(async (req, res, next) => {
+    let categories;
+    if(nodeCache.has("all-categories")){
+        categories = JSON.parse(nodeCache.get("all-categories") as string)
+    } else {
+        categories = await Product.distinct("category")
+        nodeCache.set("all-categories",JSON.stringify(categories))
+    }
+    res.status(201).json({
+        success: true,
+        categories
+    })
+    
+})
+
+export const getAdminProducts = TryCatch(async (req, res, next) => {
+    let products
+    if(nodeCache.has("admin-products")){
+        products = JSON.parse(nodeCache.get("admin-products") as string)
+    } else{
+        products = await Product.find({})
+        nodeCache.set("admin-products",JSON.stringify(products))
+    }
+    res.status(201).json({
+        success: true,
+        products
+    })
+    
+})
 export const newProduct = TryCatch(async (req: Request<{}, {}, NewProductRequestBody>, res: Response, next: NextFunction) => {
     const { name, price, category, stock } = req.body
     const photo = req.file
@@ -27,42 +73,11 @@ export const newProduct = TryCatch(async (req: Request<{}, {}, NewProductRequest
         stock,
         photo: photo?.path
     })
+    await invalidateProductCache({product:true}) // calling the cache validate functiopn to clear the cache
+
     res.status(201).json({
         message: "Product is created successfully",
         success: true
-    })
-
-})
-
-export const latestProducts = TryCatch(async (req, res, next) => {
-    let products;
-    if(nodeCache.has("all-products")){
-        products = JSON.parse(nodeCache.get("all-products") as string)
-    } else {
-        products = await Product.find({}).sort({ createdAt: -1 }).limit(5)
-        nodeCache.set("all-products",JSON.stringify(products))
-    }
-
-    res.status(201).json({
-        success: true,
-        products
-    })
-
-})
-export const getAllCategories = TryCatch(async (req, res, next) => {
-    const categories = await Product.distinct("category")
-    res.status(201).json({
-        success: true,
-        categories
-    })
-
-})
-
-export const getAdminProducts = TryCatch(async (req, res, next) => {
-    const products = await Product.find({})
-    res.status(201).json({
-        success: true,
-        products
     })
 
 })
@@ -87,6 +102,7 @@ export const updateProduct = TryCatch(async (req, res, next) => {
     if (stock) product.stock = stock
 
     await product.save()
+    await invalidateProductCache({product:true}) // calling the cache validate functiopn to clear the cache
 
     res.status(201).json({
         message: "Product is updated successfully",
@@ -108,6 +124,8 @@ export const deleteProductByID = TryCatch(
             console.log('pic is deleted')
         })
         await product.deleteOne()
+    await invalidateProductCache({product:true}) // calling the cache validate functiopn to clear the cache
+
         res.status(201).json({
             message: "Product has been deleted successfully",
             success: true
@@ -117,8 +135,14 @@ export const deleteProductByID = TryCatch(
 export const getProductByID = TryCatch(
     async (req, res, next) => {
         const { id } = req.params
+        let product;
         console.log("id of ", id)
-        const product = await Product.findById(id)
+        if(nodeCache.has(`single-product-${id}`)){
+            product = JSON.parse(nodeCache.get(`single-product-${id}`) as string)
+        } else {
+            product = await Product.findById(id)
+            nodeCache.set(`single-product-${id}`,JSON.stringify(product))
+        }
         if (!product) {
             return next(new ErrorHandler("Product not found", 404))
         }

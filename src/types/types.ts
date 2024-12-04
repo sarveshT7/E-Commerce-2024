@@ -37,3 +37,8 @@ export interface BaseQuery {
     price?: { $lte: number };
     category?: string;
 }
+export type InvalidateProps = {
+    product?:boolean;
+    admin?:boolean;
+    order?:boolean;
+}
