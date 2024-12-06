@@ -38,7 +38,34 @@ export interface BaseQuery {
     category?: string;
 }
 export type InvalidateProps = {
-    product?:boolean;
-    admin?:boolean;
-    order?:boolean;
+    product?: boolean;
+    admin?: boolean;
+    order?: boolean;
+}
+
+export type ShippingInfotype = {
+    address: string;
+    city: string;
+    state: string;
+    country: string;
+    pincode: number;
+}
+
+export type ExportOrderType = {
+    name: string;
+    photo: string;
+    price: number;
+    quantity: number;
+    productId: string;
+}
+export interface NewOrderRequestBody {
+    shippingInfo: ShippingInfotype;
+    user: string;
+    subtotal: number;
+    tax: number;
+    shippingCharges: number;
+    discount: number;
+    total: number;
+    orderItems: ExportOrderType[]
+
 }
