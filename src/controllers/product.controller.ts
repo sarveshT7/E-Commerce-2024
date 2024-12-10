@@ -7,7 +7,7 @@ import { rm } from "fs";
 // import { faker } from '@faker-js/faker';
 import NodeCache from "node-cache";
 import { nodeCache } from "../app.js";
-import { invalidateProductCache } from "../utils/features.js";
+import { invalidateCache } from "../utils/features.js";
 
 
 export const latestProducts = TryCatch(async (req, res, next) => {
@@ -73,7 +73,7 @@ export const newProduct = TryCatch(async (req: Request<{}, {}, NewProductRequest
         stock,
         photo: photo?.path
     })
-    await invalidateProductCache({product:true}) // calling the cache validate functiopn to clear the cache
+    await invalidateCache({product:true}) // calling the cache validate functiopn to clear the cache
 
     res.status(201).json({
         message: "Product is created successfully",
@@ -102,7 +102,7 @@ export const updateProduct = TryCatch(async (req, res, next) => {
     if (stock) product.stock = stock
 
     await product.save()
-    await invalidateProductCache({product:true}) // calling the cache validate functiopn to clear the cache
+    await invalidateCache({product:true}) // calling the cache validate functiopn to clear the cache
 
     res.status(201).json({
         message: "Product is updated successfully",
@@ -124,7 +124,7 @@ export const deleteProductByID = TryCatch(
             console.log('pic is deleted')
         })
         await product.deleteOne()
-    await invalidateProductCache({product:true}) // calling the cache validate functiopn to clear the cache
+    await invalidateCache({product:true}) // calling the cache validate functiopn to clear the cache
 
         res.status(201).json({
             message: "Product has been deleted successfully",
