@@ -41,6 +41,9 @@ export type InvalidateProps = {
     product?: boolean;
     admin?: boolean;
     order?: boolean;
+    orderId?: string;
+    userId?: string;
+    productId?: string | string[];
 }
 
 export type ShippingInfotype = {

@@ -3,6 +3,7 @@ import { ExportOrderType, InvalidateProps } from "../types/types.js"
 import { nodeCache } from "../app.js"
 import { Product } from "../models/product.js"
 import ErrorHandler from "./errorClass.js"
+import { Order } from "../models/order.js"
 
 
 export const connectDB = (URI: string) => {
@@ -12,18 +13,17 @@ export const connectDB = (URI: string) => {
         .catch((err) => console.log('error in connecting DB', err))
 }
 
-export const invalidateCache = async ({ product, order, admin }: InvalidateProps) => {
+export const invalidateCache = async ({ product, order, admin, orderId, userId, productId }: InvalidateProps) => {
     if (product) {
-        const productKeys = ["latest-products", "all-categories", "admin-products"]
-
-        const products = await Product.find({}).select("_id")
-        products.forEach(prod => productKeys.push(`single-product-${prod._id}`)) // getting all the product ids
-        nodeCache.del(productKeys)          // deleting from the cache
+        const productKeys = ["latest-products", "all-categories", "admin-products", `single-product-${productId}`]
+        nodeCache.del(productKeys)          // deleting product from the cache
     }
     if (admin) {
 
     }
     if (order) {
+        const orderKeys: string[] = ['all-orders', `my-orders-${userId}`, `single-order-${orderId}`]
+        nodeCache.del(orderKeys)        // deleting order from the cache
 
     }
 }
