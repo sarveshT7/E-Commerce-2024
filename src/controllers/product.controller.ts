@@ -73,7 +73,10 @@ export const newProduct = TryCatch(async (req: Request<{}, {}, NewProductRequest
         stock,
         photo: photo?.path
     })
-    await invalidateCache({product:true}) // calling the cache validate functiopn to clear the cache
+    await invalidateCache({
+        product:true,
+        admin:true
+    }) // calling the cache validate functiopn to clear the cache
 
     res.status(201).json({
         message: "Product is created successfully",
@@ -102,7 +105,13 @@ export const updateProduct = TryCatch(async (req, res, next) => {
     if (stock) product.stock = stock
 
     await product.save()
-    await invalidateCache({product:true}) // calling the cache validate functiopn to clear the cache
+    await invalidateCache(
+        {
+            product:true,
+            productId:String(product._id),
+            admin:true
+        }
+    ) // calling the cache validate functiopn to clear the cache
 
     res.status(201).json({
         message: "Product is updated successfully",
@@ -117,14 +126,21 @@ export const deleteProductByID = TryCatch(
         console.log("id of ", id)
         const product = await Product.findById(id)
         if (!product) {
-            return next(new ErrorHandler("User not found", 400))
+            return next(new ErrorHandler("Product not found", 400))
         }
 
         rm(product.photo, () => {
             console.log('pic is deleted')
         })
         await product.deleteOne()
-    await invalidateCache({product:true}) // calling the cache validate functiopn to clear the cache
+    await invalidateCache(
+        {
+            product:true,
+            productId: String(product._id),
+            admin:true
+
+        }
+    ) // calling the cache validate functiopn to clear the cache
 
         res.status(201).json({
             message: "Product has been deleted successfully",

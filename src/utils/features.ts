@@ -15,7 +15,9 @@ export const connectDB = (URI: string) => {
 
 export const invalidateCache = async ({ product, order, admin, orderId, userId, productId }: InvalidateProps) => {
     if (product) {
-        const productKeys = ["latest-products", "all-categories", "admin-products", `single-product-${productId}`]
+        const productKeys = ["latest-products", "all-categories", "admin-products"]
+        if (typeof productId == "string") productKeys.push(`product-${productId}`)
+        if (typeof productId == "object") productId.forEach(item => productKeys.push(`product-${item}`))
         nodeCache.del(productKeys)          // deleting product from the cache
     }
     if (admin) {

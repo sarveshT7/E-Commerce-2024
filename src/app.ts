@@ -9,6 +9,7 @@ import { userRoutes } from './routes/user.route.js'
 import productRoutes from './routes/product.route.js'
 import NodeCache from 'node-cache'
 import { orderRoutes } from './routes/order.route.js'
+import { couponRouter } from './routes/payment.route.js'
 
 
 config({
@@ -33,9 +34,15 @@ app.use('/api/v1/product', productRoutes)
 //api version of order
 app.use('/api/v1/order', orderRoutes)
 
+//api version of payment
+app.use('/api/v1/payment', couponRouter)
+
+
+
 app.get("/", (req, res) => {
     res.send("Api working with /api/v1")
 })
+
 
 app.use("/uploads", express.static("uploads"))
 app.use(errorMiddleware)
