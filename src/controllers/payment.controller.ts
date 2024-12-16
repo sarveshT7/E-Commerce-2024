@@ -46,10 +46,13 @@ export const allCoupons = TryCatch(
 export const deleteCoupon = TryCatch(
     async (req, res, next) => {
         const { id } = req.params
-        await Coupon.findByIdAndDelete(id)
+        const coupon = await Coupon.findByIdAndDelete(id)
+        if (!coupon) {
+            return next(new ErrorHandler("Coupon not found", 400))
+        }
         res.status(200).json({
             success: true,
-            message: `coupon code deleted successfully`
+            message: `coupon code ${coupon?.coupon} deleted successfully`
         })
     }
 )

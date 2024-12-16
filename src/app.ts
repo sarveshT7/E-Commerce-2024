@@ -10,6 +10,7 @@ import productRoutes from './routes/product.route.js'
 import NodeCache from 'node-cache'
 import { orderRoutes } from './routes/order.route.js'
 import { couponRouter } from './routes/payment.route.js'
+import { dashboardRoutes } from './routes/stats.route.js'
 
 
 config({
@@ -36,6 +37,9 @@ app.use('/api/v1/order', orderRoutes)
 
 //api version of payment
 app.use('/api/v1/payment', couponRouter)
+
+//api version of dashboard
+app.use('/api/v1/dashboard', dashboardRoutes)
 
 
 
