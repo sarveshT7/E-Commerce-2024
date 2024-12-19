@@ -11,6 +11,7 @@ import NodeCache from 'node-cache'
 import { orderRoutes } from './routes/order.route.js'
 import { couponRouter } from './routes/payment.route.js'
 import { dashboardRoutes } from './routes/stats.route.js'
+import Stripe from 'stripe'
 
 
 config({
@@ -18,12 +19,15 @@ config({
 })
 const PORT = process.env.PORT || 4000
 const URI = process.env.MONGO_URI || ""
+const stripeKey = process.env.STRIPE_URI || ""
 // console.log("port",process.env.PORT)
 connectDB(URI)
 
 const app = express()
 app.use(express.json());
 app.use(morgan("dev"))
+
+export const stripe = new Stripe(stripeKey);
 
 export const nodeCache = new NodeCache()
 // api version1 of user

@@ -3,7 +3,7 @@ import { TryCatch } from "../middlewares/error.js";
 import { Order } from "../models/order.js";
 import { Product } from "../models/product.js";
 import { User } from "../models/user.js";
-import { calculatePercentage, getInventoryCategories } from "../utils/features.js";
+import { calculatePercentage, getChartData, getInventoryCategories, MyDocument } from "../utils/features.js";
 
 export const getdashboardStats = TryCatch(
     async (req, res, next) => {
@@ -121,7 +121,7 @@ export const getdashboardStats = TryCatch(
 
             lastSixMonthOrders.forEach((order) => {
                 const creationDate = order.createdAt
-                const monthDiff = today.getMonth() - creationDate.getMonth()
+                const monthDiff = (today.getMonth() - creationDate.getMonth() + 12) % 12
                 if (monthDiff < 6) {
                     orderSixMonthlyCounts[6 - monthDiff - 1] += 1
                     orderSixMonthlyRevenue[6 - monthDiff - 1] += order.total
@@ -251,11 +251,100 @@ export const getPieCharts = TryCatch(
 )
 export const getBarCharts = TryCatch(
     async (req, res, next) => {
+        const key = "admin-bar-garphs"
+        let charts = {}
+        if (nodeCache.has(key)) charts = JSON.parse(nodeCache.get(key) as string)
+        else {
+            const today = new Date()
+            const sixMonthsAgo = new Date()
+            const twelveMonthsAgo = new Date()
 
+            sixMonthsAgo.setMonth(today.getMonth() - 6)
+            twelveMonthsAgo.setMonth(today.getMonth() - 12)
+
+            const sixMonthProductsPromise: Promise<MyDocument[]> = Product.find({
+                createdAt: {
+                    $gte: sixMonthsAgo,
+                    $lte: today,
+                }
+            }).select("createdAt")
+
+            const sixmonthUsersPromise: Promise<MyDocument[]> = User.find({
+                createdAt: {
+                    $gte: sixMonthsAgo,
+                    $lte: today
+                }
+            }).select("createdAt")
+
+            const twelveMonthOrdersPromise: Promise<MyDocument[]> = Order.find({
+                createdAt: {
+                    $gte: twelveMonthsAgo,
+                    $lte: today
+                }
+            }).select("createdAt")
+            const [products, users, orders] = await Promise.all([
+                sixMonthProductsPromise,
+                sixmonthUsersPromise,
+                twelveMonthOrdersPromise
+            ])
+            const productCounts = getChartData({ length: 6, today, docArr: products as MyDocument[] });
+            const usersCounts = getChartData({ length: 6, today, docArr: users });
+            const ordersCounts = getChartData({ length: 12, today, docArr: orders });
+
+            charts = {
+                products: productCounts,
+                users: usersCounts,
+                orders: ordersCounts
+            }
+        }
+        return res.status(200).json({
+            success: true,
+            charts
+        })
     }
 )
 export const getlineCharts = TryCatch(
     async (req, res, next) => {
+        const key = "admin-bar-garphs"
+        let charts = {}
+        if (nodeCache.has(key)) charts = JSON.parse(nodeCache.get(key) as string)
+        else {
+            const today = new Date()
+            const twelveMonthsAgo = new Date()
+            twelveMonthsAgo.setMonth(today.getMonth() - 12)
+            const baseQuery = {
+                createdAt: {
+                    $gte: twelveMonthsAgo,
+                    $lte: today
+                }
+            }
+            const tweleveMonProductsPromise: Promise<MyDocument[]> = Product.find(baseQuery).select("createdAt")
+            const tweleveMonUsersPromise: Promise<MyDocument[]> = User.find(baseQuery).select("createdAt")
+            const tweleveMonOrdersPromise: Promise<MyDocument[]> = Order.find(baseQuery).select("createdAt")
 
+            const [products, users, orders] = await Promise.all([
+                tweleveMonProductsPromise,
+                tweleveMonUsersPromise,
+                tweleveMonOrdersPromise
+            ])
+            const productCounts = getChartData({ length: 12, today, docArr: products });
+            const usersCounts = getChartData({ length: 12, today, docArr: users });
+            const discount = getChartData({
+                length: 12, today, docArr: orders, property: "discount",
+            });
+            const revenue = getChartData({
+                length: 12, today, docArr: orders, property: "total"
+            });
+            charts = {
+                users: usersCounts,
+                products: productCounts,
+                discount,
+                revenue,
+            };
+        }
+        return res.status(200).json({
+            success: true,
+            charts
+        })
     }
 )
